@@ -84,6 +84,8 @@ class VulkanCommon {
  public:
   VulkanCommon();
   virtual ~VulkanCommon();
+  VkDevice GetDevice() const;
+  const SwapChainParameters& GetSwapChain() const;
 
  private:
   bool CheckExtensionAvailability(
@@ -95,7 +97,21 @@ class VulkanCommon {
       uint32_t &selected_graphics_queue_family_index,
       uint32_t &selected_present_queue_family_index);
   bool CreateDevice();
-
+  bool CreateSwapChain();
+  bool CreateSwapChainImageViews();
+  bool GetDeviceQueue();
+  uint32_t GetSwapChainNumImages(
+      VkSurfaceCapabilitiesKHR &surface_capabilities);
+  VkSurfaceFormatKHR GetSwapChainFormat(
+      std::vector<VkSurfaceFormatKHR> &surface_formats);
+  VkExtent2D GetSwapChainExtent(VkSurfaceCapabilitiesKHR &surface_capabilities);
+  VkImageUsageFlags GetSwapChainUsageFlags(
+      VkSurfaceCapabilitiesKHR &surface_capabilities);
+  VkSurfaceTransformFlagBitsKHR GetSwapChainTransform(
+      VkSurfaceCapabilitiesKHR &surface_capabilities);
+  VkPresentModeKHR GetSwapChainPresentMode(
+      std::vector<VkPresentModeKHR> &present_modes);
+  bool can_render_;
   VulkanCommonParameters Vulkan;
 };
 
