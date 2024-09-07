@@ -85,7 +85,7 @@ bool VulkanCommon::CreateInstance() {
       extensions.data()  // const char * const        *ppEnabledExtensionNames
   };
 
-  if (vkCreateInstance(&instance_create_info, nullptr, &Vulkan.Instance) !=
+  if (vkCreateInstance(&instance_create_info, nullptr, &vulkan_.Instance) !=
       VK_SUCCESS) {
     std::cout << "Could not create Vulkan instance!" << std::endl;
     return false;
@@ -165,7 +165,7 @@ bool VulkanCommon::CheckPhysicalDeviceProperties(
 
   for (uint32_t i = 0; i < queue_families_count; ++i) {
     vkGetPhysicalDeviceSurfaceSupportKHR(physical_device, i,
-                                         Vulkan.PresentationSurface,
+                                         vulkan_.PresentationSurface,
                                          &queue_present_support[i]);
 
     if ((queue_family_properties[i].queueCount > 0) &&
@@ -210,7 +210,7 @@ bool VulkanCommon::CheckPhysicalDeviceProperties(
 
 bool VulkanCommon::CreateDevice() {
   uint32_t num_devices = 0;
-  if ((vkEnumeratePhysicalDevices(Vulkan.Instance, &num_devices, nullptr) !=
+  if ((vkEnumeratePhysicalDevices(vulkan_.Instance, &num_devices, nullptr) !=
        VK_SUCCESS) ||
       (num_devices == 0)) {
     std::cout << "Error occurred during physical devices enumeration!"
@@ -219,7 +219,7 @@ bool VulkanCommon::CreateDevice() {
   }
 
   std::vector<VkPhysicalDevice> physical_devices(num_devices);
-  if (vkEnumeratePhysicalDevices(Vulkan.Instance, &num_devices,
+  if (vkEnumeratePhysicalDevices(vulkan_.Instance, &num_devices,
                                  physical_devices.data()) != VK_SUCCESS) {
     std::cout << "Error occurred during physical devices enumeration!"
               << std::endl;
@@ -233,11 +233,11 @@ bool VulkanCommon::CreateDevice() {
     if (CheckPhysicalDeviceProperties(physical_devices[i],
                                       selected_graphics_queue_family_index,
                                       selected_present_queue_family_index)) {
-      Vulkan.PhysicalDevice = physical_devices[i];
+      vulkan_.PhysicalDevice = physical_devices[i];
       break;
     }
   }
-  if (Vulkan.PhysicalDevice == VK_NULL_HANDLE) {
+  if (vulkan_.PhysicalDevice == VK_NULL_HANDLE) {
     std::cout
         << "Could not select physical device based on the chosen properties!"
         << std::endl;
@@ -286,22 +286,22 @@ bool VulkanCommon::CreateDevice() {
       nullptr  // const VkPhysicalDeviceFeatures    *pEnabledFeatures
   };
 
-  if (vkCreateDevice(Vulkan.PhysicalDevice, &device_create_info, nullptr,
-                     &Vulkan.Device) != VK_SUCCESS) {
+  if (vkCreateDevice(vulkan_.PhysicalDevice, &device_create_info, nullptr,
+                     &vulkan_.Device) != VK_SUCCESS) {
     std::cout << "Could not create Vulkan device!" << std::endl;
     return false;
   }
 
-  Vulkan.GraphicsQueue.FamilyIndex = selected_graphics_queue_family_index;
-  Vulkan.PresentQueue.FamilyIndex = selected_present_queue_family_index;
+  vulkan_.GraphicsQueue.FamilyIndex = selected_graphics_queue_family_index;
+  vulkan_.PresentQueue.FamilyIndex = selected_present_queue_family_index;
   return true;
 }
 
 bool VulkanCommon::GetDeviceQueue() {
-  vkGetDeviceQueue(Vulkan.Device, Vulkan.GraphicsQueue.FamilyIndex, 0,
-                   &Vulkan.GraphicsQueue.Handle);
-  vkGetDeviceQueue(Vulkan.Device, Vulkan.PresentQueue.FamilyIndex, 0,
-                   &Vulkan.PresentQueue.Handle);
+  vkGetDeviceQueue(vulkan_.Device, vulkan_.GraphicsQueue.FamilyIndex, 0,
+                   &vulkan_.GraphicsQueue.Handle);
+  vkGetDeviceQueue(vulkan_.Device, vulkan_.PresentQueue.FamilyIndex, 0,
+                   &vulkan_.PresentQueue.Handle);
   return true;
 }
 
@@ -432,10 +432,10 @@ VkSurfaceTransformFlagBitsKHR VulkanCommon::GetSwapChainTransform(
   }
 }
 
-VkDevice VulkanCommon::GetDevice() const { return Vulkan.Device; }
+VkDevice VulkanCommon::GetDevice() const { return vulkan_.Device; }
 
 const SwapChainParameters &VulkanCommon::GetSwapChain() const {
-  return Vulkan.SwapChain;
+  return vulkan_.SwapChain;
 }
 
 VkPresentModeKHR VulkanCommon::GetSwapChainPresentMode(
@@ -469,21 +469,22 @@ VkPresentModeKHR VulkanCommon::GetSwapChainPresentMode(
 bool VulkanCommon::CreateSwapChain() {
   can_render_ = false;
 
-  if (Vulkan.Device != VK_NULL_HANDLE) {
-    vkDeviceWaitIdle(Vulkan.Device);
+  if (vulkan_.Device != VK_NULL_HANDLE) {
+    vkDeviceWaitIdle(vulkan_.Device);
   }
 
-  for (std::size_t i = 0; i < Vulkan.SwapChain.Images.size(); ++i) {
-    if (Vulkan.SwapChain.Images[i].View != VK_NULL_HANDLE) {
-      vkDestroyImageView(GetDevice(), Vulkan.SwapChain.Images[i].View, nullptr);
-      Vulkan.SwapChain.Images[i].View = VK_NULL_HANDLE;
+  for (std::size_t i = 0; i < vulkan_.SwapChain.Images.size(); ++i) {
+    if (vulkan_.SwapChain.Images[i].View != VK_NULL_HANDLE) {
+      vkDestroyImageView(GetDevice(), vulkan_.SwapChain.Images[i].View,
+                         nullptr);
+      vulkan_.SwapChain.Images[i].View = VK_NULL_HANDLE;
     }
   }
-  Vulkan.SwapChain.Images.clear();
+  vulkan_.SwapChain.Images.clear();
 
   VkSurfaceCapabilitiesKHR surface_capabilities;
   if (vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
-          Vulkan.PhysicalDevice, Vulkan.PresentationSurface,
+          vulkan_.PhysicalDevice, vulkan_.PresentationSurface,
           &surface_capabilities) != VK_SUCCESS) {
     std::cout << "Could not check presentation surface capabilities!"
               << std::endl;
@@ -492,7 +493,7 @@ bool VulkanCommon::CreateSwapChain() {
 
   uint32_t formats_count;
   if ((vkGetPhysicalDeviceSurfaceFormatsKHR(
-           Vulkan.PhysicalDevice, Vulkan.PresentationSurface, &formats_count,
+           vulkan_.PhysicalDevice, vulkan_.PresentationSurface, &formats_count,
            nullptr) != VK_SUCCESS) ||
       (formats_count == 0)) {
     std::cout
@@ -503,7 +504,7 @@ bool VulkanCommon::CreateSwapChain() {
 
   std::vector<VkSurfaceFormatKHR> surface_formats(formats_count);
   if (vkGetPhysicalDeviceSurfaceFormatsKHR(
-          Vulkan.PhysicalDevice, Vulkan.PresentationSurface, &formats_count,
+          vulkan_.PhysicalDevice, vulkan_.PresentationSurface, &formats_count,
           surface_formats.data()) != VK_SUCCESS) {
     std::cout
         << "Error occurred during presentation surface formats enumeration!"
@@ -513,7 +514,7 @@ bool VulkanCommon::CreateSwapChain() {
 
   uint32_t present_modes_count;
   if ((vkGetPhysicalDeviceSurfacePresentModesKHR(
-           Vulkan.PhysicalDevice, Vulkan.PresentationSurface,
+           vulkan_.PhysicalDevice, vulkan_.PresentationSurface,
            &present_modes_count, nullptr) != VK_SUCCESS) ||
       (present_modes_count == 0)) {
     std::cout << "Error occurred during presentation surface present modes "
@@ -524,7 +525,7 @@ bool VulkanCommon::CreateSwapChain() {
 
   std::vector<VkPresentModeKHR> present_modes(present_modes_count);
   if (vkGetPhysicalDeviceSurfacePresentModesKHR(
-          Vulkan.PhysicalDevice, Vulkan.PresentationSurface,
+          vulkan_.PhysicalDevice, vulkan_.PresentationSurface,
           &present_modes_count, present_modes.data()) != VK_SUCCESS) {
     std::cout << "Error occurred during presentation surface present modes "
                  "enumeration!"
@@ -542,7 +543,7 @@ bool VulkanCommon::CreateSwapChain() {
       GetSwapChainTransform(surface_capabilities);
   VkPresentModeKHR desired_present_mode =
       GetSwapChainPresentMode(present_modes);
-  VkSwapchainKHR old_swap_chain = Vulkan.SwapChain.Handle;
+  VkSwapchainKHR old_swap_chain = vulkan_.SwapChain.Handle;
 
   if (static_cast<int>(desired_usage) == -1) {
     return false;
@@ -559,9 +560,9 @@ bool VulkanCommon::CreateSwapChain() {
 
   VkSwapchainCreateInfoKHR swap_chain_create_info = {
       VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,  // VkStructureType sType
-      nullptr,                     // const void                    *pNext
-      0,                           // VkSwapchainCreateFlagsKHR      flags
-      Vulkan.PresentationSurface,  // VkSurfaceKHR                   surface
+      nullptr,                      // const void                    *pNext
+      0,                            // VkSwapchainCreateFlagsKHR      flags
+      vulkan_.PresentationSurface,  // VkSurfaceKHR                   surface
       desired_number_of_images,  // uint32_t                       minImageCount
       desired_format.format,     // VkFormat                       imageFormat
       desired_format.colorSpace,  // VkColorSpaceKHR imageColorSpace
@@ -579,48 +580,48 @@ bool VulkanCommon::CreateSwapChain() {
       old_swap_chain         // VkSwapchainKHR                 oldSwapchain
   };
 
-  if (vkCreateSwapchainKHR(Vulkan.Device, &swap_chain_create_info, nullptr,
-                           &Vulkan.SwapChain.Handle) != VK_SUCCESS) {
+  if (vkCreateSwapchainKHR(vulkan_.Device, &swap_chain_create_info, nullptr,
+                           &vulkan_.SwapChain.Handle) != VK_SUCCESS) {
     std::cout << "Could not create swap chain!" << std::endl;
     return false;
   }
   if (old_swap_chain != VK_NULL_HANDLE) {
-    vkDestroySwapchainKHR(Vulkan.Device, old_swap_chain, nullptr);
+    vkDestroySwapchainKHR(vulkan_.Device, old_swap_chain, nullptr);
   }
 
-  Vulkan.SwapChain.Format = desired_format.format;
+  vulkan_.SwapChain.Format = desired_format.format;
 
   uint32_t image_count = 0;
-  if ((vkGetSwapchainImagesKHR(Vulkan.Device, Vulkan.SwapChain.Handle,
+  if ((vkGetSwapchainImagesKHR(vulkan_.Device, vulkan_.SwapChain.Handle,
                                &image_count, nullptr) != VK_SUCCESS) ||
       (image_count == 0)) {
     std::cout << "Could not get swap chain images!" << std::endl;
     return false;
   }
-  Vulkan.SwapChain.Images.resize(image_count);
+  vulkan_.SwapChain.Images.resize(image_count);
 
   std::vector<VkImage> images(image_count);
-  if (vkGetSwapchainImagesKHR(Vulkan.Device, Vulkan.SwapChain.Handle,
+  if (vkGetSwapchainImagesKHR(vulkan_.Device, vulkan_.SwapChain.Handle,
                               &image_count, images.data()) != VK_SUCCESS) {
     std::cout << "Could not get swap chain images!" << std::endl;
     return false;
   }
 
-  for (std::size_t i = 0; i < Vulkan.SwapChain.Images.size(); ++i) {
-    Vulkan.SwapChain.Images[i].Handle = images[i];
+  for (std::size_t i = 0; i < vulkan_.SwapChain.Images.size(); ++i) {
+    vulkan_.SwapChain.Images[i].Handle = images[i];
   }
-  Vulkan.SwapChain.Extent = desired_extent;
+  vulkan_.SwapChain.Extent = desired_extent;
 
   return CreateSwapChainImageViews();
 }
 
 bool VulkanCommon::CreateSwapChainImageViews() {
-  for (std::size_t i = 0; i < Vulkan.SwapChain.Images.size(); ++i) {
+  for (std::size_t i = 0; i < vulkan_.SwapChain.Images.size(); ++i) {
     VkImageViewCreateInfo image_view_create_info = {
         VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,  // VkStructureType sType
         nullptr,  // const void                    *pNext
         0,        // VkImageViewCreateFlags         flags
-        Vulkan.SwapChain.Images[i].Handle,  // VkImage image
+        vulkan_.SwapChain.Images[i].Handle,  // VkImage image
         VK_IMAGE_VIEW_TYPE_2D,  // VkImageViewType                viewType
         GetSwapChain().Format,  // VkFormat                       format
         {
@@ -640,7 +641,7 @@ bool VulkanCommon::CreateSwapChainImageViews() {
         }};
 
     if (vkCreateImageView(GetDevice(), &image_view_create_info, nullptr,
-                          &Vulkan.SwapChain.Images[i].View) != VK_SUCCESS) {
+                          &vulkan_.SwapChain.Images[i].View) != VK_SUCCESS) {
       std::cout << "Could not create image view for framebuffer!" << std::endl;
       return false;
     }
@@ -648,5 +649,32 @@ bool VulkanCommon::CreateSwapChainImageViews() {
 
   can_render_ = true;
 
+  return true;
+}
+
+bool VulkanCommon::PrepareVulkan(GLFWwindow *window) {
+  if (!CreateInstance()) {
+    return false;
+  }
+  if (!CreatePresentationSurface(window)) {
+    return false;
+  }
+  if (!CreateDevice()) {
+    return false;
+  }
+  if (!GetDeviceQueue()) {
+    return false;
+  }
+  if (!CreateSwapChain()) {
+    return false;
+  }
+  return true;
+}
+
+bool VulkanCommon::CreatePresentationSurface(GLFWwindow *window) {
+  if (glfwCreateWindowSurface(vulkan_.Instance, window, nullptr,
+                              &vulkan_.PresentationSurface) != VK_SUCCESS) {
+    return false;
+  }
   return true;
 }

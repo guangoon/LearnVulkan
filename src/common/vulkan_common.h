@@ -3,7 +3,7 @@
 #define VULKAN_COMMON_H_
 
 #define GLFW_INCLUDE_VULKAN
-
+#include <GLFW/glfw3.h>
 #include <vulkan/vulkan.h>
 
 #include <vector>
@@ -85,18 +85,20 @@ class VulkanCommon {
   VulkanCommon();
   virtual ~VulkanCommon();
   VkDevice GetDevice() const;
-  const SwapChainParameters& GetSwapChain() const;
+  const SwapChainParameters &GetSwapChain() const;
+  bool PrepareVulkan(GLFWwindow *window);
 
  private:
   bool CheckExtensionAvailability(
       const char *extension_name,
       const std::vector<VkExtensionProperties> &available_extensions);
-  bool CreateInstance();
   bool CheckPhysicalDeviceProperties(
       VkPhysicalDevice physical_device,
       uint32_t &selected_graphics_queue_family_index,
       uint32_t &selected_present_queue_family_index);
+  bool CreateInstance();
   bool CreateDevice();
+  bool CreatePresentationSurface(GLFWwindow *window);
   bool CreateSwapChain();
   bool CreateSwapChainImageViews();
   bool GetDeviceQueue();
@@ -112,7 +114,7 @@ class VulkanCommon {
   VkPresentModeKHR GetSwapChainPresentMode(
       std::vector<VkPresentModeKHR> &present_modes);
   bool can_render_;
-  VulkanCommonParameters Vulkan;
+  VulkanCommonParameters vulkan_;
 };
 
 #endif
