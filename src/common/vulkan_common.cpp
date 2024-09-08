@@ -24,6 +24,15 @@ bool VulkanCommon::CheckExtensionAvailability(
   return false;
 }
 
+std::vector<const char *> VulkanCommon::GetRequiredExtensions() {
+  uint32_t glfwExtensionCount = 0;
+  const char **glfwExtensions;
+  glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+  std::vector<const char *> extensions(glfwExtensions,
+                                       glfwExtensions + glfwExtensionCount);
+  return extensions;
+}
+
 bool VulkanCommon::CreateInstance() {
   uint32_t extensions_count = 0;
   if ((vkEnumerateInstanceExtensionProperties(nullptr, &extensions_count,
@@ -43,16 +52,17 @@ bool VulkanCommon::CreateInstance() {
     return false;
   }
 
-  std::vector<const char *> extensions = {
-    VK_KHR_SURFACE_EXTENSION_NAME,
-#if defined(VK_USE_PLATFORM_WIN32_KHR)
-    VK_KHR_WIN32_SURFACE_EXTENSION_NAME
-#elif defined(VK_USE_PLATFORM_XCB_KHR)
-    VK_KHR_XCB_SURFACE_EXTENSION_NAME
-#elif defined(VK_USE_PLATFORM_XLIB_KHR)
-    VK_KHR_XLIB_SURFACE_EXTENSION_NAME
-#endif
-  };
+  for (auto available_extension : available_extensions) {
+    std::cout << "available_extension.extensionName : " +
+                     std::string(available_extension.extensionName)
+              << std::endl;
+  }
+
+  std::vector<const char *> extensions = GetRequiredExtensions();
+
+  for (auto required_extension : extensions) {
+    std::cout << "required_extension.extensionName : " + std::string(required_extension) << std::endl;
+  }
 
   for (std::size_t i = 0; i < extensions.size(); ++i) {
     if (!CheckExtensionAvailability(extensions[i], available_extensions)) {
@@ -653,18 +663,23 @@ bool VulkanCommon::CreateSwapChainImageViews() {
 }
 
 bool VulkanCommon::PrepareVulkan(GLFWwindow *window) {
+  std::cout << "VulkanCommon::PrepareVulkan" << std::endl;
   if (!CreateInstance()) {
     return false;
   }
+  std::cout << "VulkanCommon::CreatePresentationSurface" << std::endl;
   if (!CreatePresentationSurface(window)) {
     return false;
   }
+  std::cout << "VulkanCommon::CreateDevice" << std::endl;
   if (!CreateDevice()) {
     return false;
   }
+  std::cout << "VulkanCommon::GetDeviceQueue" << std::endl;
   if (!GetDeviceQueue()) {
     return false;
   }
+  std::cout << "VulkanCommon::CreateSwapChain" << std::endl;
   if (!CreateSwapChain()) {
     return false;
   }
@@ -674,7 +689,16 @@ bool VulkanCommon::PrepareVulkan(GLFWwindow *window) {
 bool VulkanCommon::CreatePresentationSurface(GLFWwindow *window) {
   if (glfwCreateWindowSurface(vulkan_.Instance, window, nullptr,
                               &vulkan_.PresentationSurface) != VK_SUCCESS) {
+    std::cout << "VulkanCommon::CreatePresentationSurface fail" << std::endl;
     return false;
   }
   return true;
+}
+
+const QueueParameters VulkanCommon::GetGraphicsQueue() const {
+  return vulkan_.GraphicsQueue;
+}
+
+const QueueParameters VulkanCommon::GetPresentQueue() const {
+  return vulkan_.PresentQueue;
 }

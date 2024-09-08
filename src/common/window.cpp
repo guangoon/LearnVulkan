@@ -15,6 +15,7 @@ Window::~Window() {
 }
 
 bool Window::Create(const char *title, int width, int height) {
+  std::cout << "Window::Create" << std::endl;
   window_ = glfwCreateWindow(width, height, title, nullptr, nullptr);
   if (window_ == nullptr) {
     std::cout << "Failed to create GLFW window" << std::endl;

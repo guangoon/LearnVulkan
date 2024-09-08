@@ -20,7 +20,8 @@ set(1.getting_started
 
 file( GLOB ADVANCED_SHARED_SOURCE_FILES
 		"src/common/window.cpp"
-		"src/common/vulkan_common.cpp" )
+		"src/common/vulkan_common.cpp"
+        "src/common/tools.cpp" )
 
 function(create_project_from_sources chapter demo)
     file(GLOB SOURCE
@@ -48,16 +49,16 @@ function(create_project_from_sources chapter demo)
 
     # copy shader files to build directory
     file(GLOB SHADERS
-        "src/${chapter}/${demo}/*.vs"
-        "src/${chapter}/${demo}/*.fs"
-        "src/${chapter}/${demo}/*.tcs"
-        "src/${chapter}/${demo}/*.tes"
-        "src/${chapter}/${demo}/*.gs"
-        "src/${chapter}/${demo}/*.cs"
+        "src/${chapter}/${demo}/data/*.frag"
+        "src/${chapter}/${demo}/data/*.frag.spv"
+        "src/${chapter}/${demo}/data/*.frag.spv.txt"
+        "src/${chapter}/${demo}/data/*.vert"
+        "src/${chapter}/${demo}/data/*.vert.spv"
+        "src/${chapter}/${demo}/data/*.vert.spv.txt"
     )
 
     foreach(SHADER ${SHADERS})
-        file(COPY ${SHADER} DESTINATION ${CMAKE_SOURCE_DIR}/bin/${chapter})
+        file(COPY ${SHADER} DESTINATION ${CMAKE_SOURCE_DIR}/bin/${chapter}/data/${demo})
     endforeach(SHADER)
 endfunction()
 

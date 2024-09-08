@@ -87,6 +87,8 @@ class VulkanCommon {
   VkDevice GetDevice() const;
   const SwapChainParameters &GetSwapChain() const;
   bool PrepareVulkan(GLFWwindow *window);
+  const QueueParameters GetGraphicsQueue() const;
+  const QueueParameters GetPresentQueue() const;
 
  private:
   bool CheckExtensionAvailability(
@@ -102,6 +104,8 @@ class VulkanCommon {
   bool CreateSwapChain();
   bool CreateSwapChainImageViews();
   bool GetDeviceQueue();
+  std::vector<const char*> GetRequiredExtensions();
+
   uint32_t GetSwapChainNumImages(
       VkSurfaceCapabilitiesKHR &surface_capabilities);
   VkSurfaceFormatKHR GetSwapChainFormat(
