@@ -6,14 +6,19 @@
 
 class HelloTriangle : public VulkanCommon {
  public:
+  HelloTriangle();
+  ~HelloTriangle();
   bool CreateRenderPass();
   bool CreateFramebuffers();
   bool CreatePipeline();
   bool CreateSemaphores();
   bool CreateCommandBuffers();
   bool RecordCommandBuffers();
+  bool    Draw() override;
 
  private:
+  void ChildClear() override;
+  bool ChildOnWindowSizeChanged() override;
   Tools::AutoDeleter<VkShaderModule, PFN_vkDestroyShaderModule>
   CreateShaderModule(const char* filename);
   Tools::AutoDeleter<VkPipelineLayout, PFN_vkDestroyPipelineLayout>

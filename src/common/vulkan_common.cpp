@@ -61,7 +61,9 @@ bool VulkanCommon::CreateInstance() {
   std::vector<const char *> extensions = GetRequiredExtensions();
 
   for (auto required_extension : extensions) {
-    std::cout << "required_extension.extensionName : " + std::string(required_extension) << std::endl;
+    std::cout << "required_extension.extensionName : " +
+                     std::string(required_extension)
+              << std::endl;
   }
 
   for (std::size_t i = 0; i < extensions.size(); ++i) {
@@ -701,4 +703,21 @@ const QueueParameters VulkanCommon::GetGraphicsQueue() const {
 
 const QueueParameters VulkanCommon::GetPresentQueue() const {
   return vulkan_.PresentQueue;
+}
+
+bool VulkanCommon::OnWindowSizeChanged() {
+  if (vulkan_.Device != VK_NULL_HANDLE) {
+    vkDeviceWaitIdle(vulkan_.Device);
+  }
+
+  ChildClear();
+
+  if (CreateSwapChain()) {
+    if (can_render_) {
+      return ChildOnWindowSizeChanged();
+    }
+    return true;
+  }
+
+  return false;
 }

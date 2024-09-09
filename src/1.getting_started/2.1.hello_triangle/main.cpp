@@ -60,7 +60,7 @@ int main(int argc, char **argv) {
   }
 
   // Rendering loop
-  if (!window.RenderingLoop()) {
+  if (!window.RenderingLoop(helloTriangle)) {
     return -1;
   }
   return 0;

@@ -89,6 +89,9 @@ class VulkanCommon {
   bool PrepareVulkan(GLFWwindow *window);
   const QueueParameters GetGraphicsQueue() const;
   const QueueParameters GetPresentQueue() const;
+  bool OnWindowSizeChanged();
+  virtual bool Draw() = 0;
+  virtual bool ReadyToDraw() const final { return can_render_; }
 
  private:
   bool CheckExtensionAvailability(
@@ -98,13 +101,15 @@ class VulkanCommon {
       VkPhysicalDevice physical_device,
       uint32_t &selected_graphics_queue_family_index,
       uint32_t &selected_present_queue_family_index);
+  virtual bool ChildOnWindowSizeChanged() = 0;
+  virtual void ChildClear() = 0;
   bool CreateInstance();
   bool CreateDevice();
   bool CreatePresentationSurface(GLFWwindow *window);
   bool CreateSwapChain();
   bool CreateSwapChainImageViews();
   bool GetDeviceQueue();
-  std::vector<const char*> GetRequiredExtensions();
+  std::vector<const char *> GetRequiredExtensions();
 
   uint32_t GetSwapChainNumImages(
       VkSurfaceCapabilitiesKHR &surface_capabilities);

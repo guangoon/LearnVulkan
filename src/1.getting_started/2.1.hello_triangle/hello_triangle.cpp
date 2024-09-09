@@ -504,3 +504,143 @@ bool HelloTriangle::RecordCommandBuffers() {
   }
   return true;
 }
+
+void HelloTriangle::ChildClear() {
+  if (GetDevice() != VK_NULL_HANDLE) {
+    vkDeviceWaitIdle(GetDevice());
+
+    if ((graphics_command_buffers_.size() > 0) &&
+        (graphics_command_buffers_[0] != VK_NULL_HANDLE)) {
+      vkFreeCommandBuffers(
+          GetDevice(), graphics_command_pool_,
+          static_cast<uint32_t>(graphics_command_buffers_.size()),
+          graphics_command_buffers_.data());
+      graphics_command_buffers_.clear();
+    }
+
+    if (graphics_command_pool_ != VK_NULL_HANDLE) {
+      vkDestroyCommandPool(GetDevice(), graphics_command_pool_, nullptr);
+      graphics_command_pool_ = VK_NULL_HANDLE;
+    }
+
+    if (graphics_pipeline_ != VK_NULL_HANDLE) {
+      vkDestroyPipeline(GetDevice(), graphics_pipeline_, nullptr);
+      graphics_pipeline_ = VK_NULL_HANDLE;
+    }
+
+    if (render_pass_ != VK_NULL_HANDLE) {
+      vkDestroyRenderPass(GetDevice(), render_pass_, nullptr);
+      render_pass_ = VK_NULL_HANDLE;
+    }
+
+    for (size_t i = 0; i < framebuffers_.size(); ++i) {
+      if (framebuffers_[i] != VK_NULL_HANDLE) {
+        vkDestroyFramebuffer(GetDevice(), framebuffers_[i], nullptr);
+        framebuffers_[i] = VK_NULL_HANDLE;
+      }
+    }
+    framebuffers_.clear();
+  }
+}
+
+bool HelloTriangle::ChildOnWindowSizeChanged() {
+  if (!CreateRenderPass()) {
+    return false;
+  }
+  if (!CreateFramebuffers()) {
+    return false;
+  }
+  if (!CreatePipeline()) {
+    return false;
+  }
+  if (!CreateCommandBuffers()) {
+    return false;
+  }
+  if (!RecordCommandBuffers()) {
+    return false;
+  }
+
+  return true;
+}
+
+HelloTriangle::~HelloTriangle() {
+  ChildClear();
+
+  if (GetDevice() != VK_NULL_HANDLE) {
+    vkDeviceWaitIdle(GetDevice());
+
+    if (image_available_semaphore_ != VK_NULL_HANDLE) {
+      vkDestroySemaphore(GetDevice(), image_available_semaphore_, nullptr);
+    }
+
+    if (rendering_finished_femaphore_ != VK_NULL_HANDLE) {
+      vkDestroySemaphore(GetDevice(), rendering_finished_femaphore_, nullptr);
+    }
+  }
+}
+
+HelloTriangle::HelloTriangle() {}
+
+bool HelloTriangle::Draw() {
+  VkSwapchainKHR swap_chain = GetSwapChain().Handle;
+  uint32_t image_index;
+
+  VkResult result = vkAcquireNextImageKHR(GetDevice(), swap_chain, UINT64_MAX,
+                                          image_available_semaphore_,
+                                          VK_NULL_HANDLE, &image_index);
+  switch (result) {
+    case VK_SUCCESS:
+    case VK_SUBOPTIMAL_KHR:
+      break;
+    case VK_ERROR_OUT_OF_DATE_KHR:
+      return OnWindowSizeChanged();
+    default:
+      std::cout << "Problem occurred during swap chain image acquisition!"
+                << std::endl;
+      return false;
+  }
+
+  VkPipelineStageFlags wait_dst_stage_mask =
+      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  VkSubmitInfo submit_info = {
+      VK_STRUCTURE_TYPE_SUBMIT_INFO,  // VkStructureType              sType
+      nullptr,                        // const void                  *pNext
+      1,  // uint32_t                     waitSemaphoreCount
+      &image_available_semaphore_,  // const VkSemaphore *pWaitSemaphores
+      &wait_dst_stage_mask,  // const VkPipelineStageFlags  *pWaitDstStageMask;
+      1,                     // uint32_t                     commandBufferCount
+      &graphics_command_buffers_[image_index],  // const VkCommandBuffer
+                                                // *pCommandBuffers
+      1,  // uint32_t                     signalSemaphoreCount
+      &rendering_finished_femaphore_  // const VkSemaphore *pSignalSemaphores
+  };
+
+  if (vkQueueSubmit(GetGraphicsQueue().Handle, 1, &submit_info,
+                    VK_NULL_HANDLE) != VK_SUCCESS) {
+    return false;
+  }
+
+  VkPresentInfoKHR present_info = {
+      VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,  // VkStructureType              sType
+      nullptr,                             // const void                  *pNext
+      1,  // uint32_t                     waitSemaphoreCount
+      &rendering_finished_femaphore_,  // const VkSemaphore *pWaitSemaphores
+      1,             // uint32_t                     swapchainCount
+      &swap_chain,   // const VkSwapchainKHR        *pSwapchains
+      &image_index,  // const uint32_t              *pImageIndices
+      nullptr        // VkResult                    *pResults
+  };
+  result = vkQueuePresentKHR(GetPresentQueue().Handle, &present_info);
+
+  switch (result) {
+    case VK_SUCCESS:
+      break;
+    case VK_ERROR_OUT_OF_DATE_KHR:
+    case VK_SUBOPTIMAL_KHR:
+      return OnWindowSizeChanged();
+    default:
+      std::cout << "Problem occurred during image presentation!" << std::endl;
+      return false;
+  }
+  return true;
+}

@@ -34,7 +34,7 @@ void Window::ProcessInput() {
     glfwSetWindowShouldClose(window_, true);
 }
 
-bool Window::RenderingLoop() {
+bool Window::RenderingLoop(VulkanCommon &vulkan_common) {
   while (!glfwWindowShouldClose(window_)) {
     // input
     // -----
@@ -42,7 +42,8 @@ bool Window::RenderingLoop() {
     // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved
     // etc.)
     // -------------------------------------------------------------------------------
-    glfwSwapBuffers(window_);
+    
+    vulkan_common.Draw();
     glfwPollEvents();
   }
   return true;
