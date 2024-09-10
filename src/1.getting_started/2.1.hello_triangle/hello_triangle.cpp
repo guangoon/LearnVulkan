@@ -9,11 +9,11 @@
 
 bool HelloTriangle::CreateRenderPass() {
   VkAttachmentDescription attachment_descriptions[] = {{
-      0,                             // VkAttachmentDescriptionFlags   flags
-      GetSwapChain().Format,         // VkFormat                       format
-      VK_SAMPLE_COUNT_1_BIT,         // VkSampleCountFlagBits          samples
-      VK_ATTACHMENT_LOAD_OP_CLEAR,   // VkAttachmentLoadOp             loadOp
-      VK_ATTACHMENT_STORE_OP_STORE,  // VkAttachmentStoreOp            storeOp
+      0,                                 // VkAttachmentDescriptionFlags   flags
+      GetSwapChain().Format,             // VkFormat                       format
+      VK_SAMPLE_COUNT_1_BIT,             // VkSampleCountFlagBits          samples
+      VK_ATTACHMENT_LOAD_OP_CLEAR,       // VkAttachmentLoadOp             loadOp
+      VK_ATTACHMENT_STORE_OP_STORE,      // VkAttachmentStoreOp            storeOp
       VK_ATTACHMENT_LOAD_OP_DONT_CARE,   // VkAttachmentLoadOp stencilLoadOp
       VK_ATTACHMENT_STORE_OP_DONT_CARE,  // VkAttachmentStoreOp stencilStoreOp
       VK_IMAGE_LAYOUT_UNDEFINED,         // VkImageLayout initialLayout;

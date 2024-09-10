@@ -14,7 +14,7 @@ class HelloTriangle : public VulkanCommon {
   bool CreateSemaphores();
   bool CreateCommandBuffers();
   bool RecordCommandBuffers();
-  bool    Draw() override;
+  bool Draw() override;
 
  private:
   void ChildClear() override;

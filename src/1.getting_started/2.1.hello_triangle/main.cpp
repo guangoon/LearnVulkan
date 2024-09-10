@@ -14,9 +14,10 @@
 // under the License.
 ////////////////////////////////////////////////////////////////////////////////
 
+#include <iostream>
+
 #include "hello_triangle.h"
 #include "window.h"
-#include <iostream>
 
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
@@ -34,27 +35,22 @@ int main(int argc, char **argv) {
     return -1;
   }
 
-  std::cout << "CreateRenderPass" << std::endl;
   if (!helloTriangle.CreateRenderPass()) {
     return -1;
   }
-   std::cout << "CreateFramebuffers" << std::endl;
   if (!helloTriangle.CreateFramebuffers()) {
     return -1;
   }
-  std::cout << "CreatePipeline" << std::endl;
   if (!helloTriangle.CreatePipeline()) {
     return -1;
   }
-  std::cout << "CreateSemaphores" << std::endl;
+
   if (!helloTriangle.CreateSemaphores()) {
     return -1;
   }
-  std::cout << "CreateCommandBuffers" << std::endl;
   if (!helloTriangle.CreateCommandBuffers()) {
     return -1;
   }
-  std::cout << "RecordCommandBuffers" << std::endl;
   if (!helloTriangle.RecordCommandBuffers()) {
     return -1;
   }
