@@ -9,11 +9,11 @@
 
 bool HelloTriangle::CreateRenderPass() {
   VkAttachmentDescription attachment_descriptions[] = {{
-      0,                                 // VkAttachmentDescriptionFlags   flags
-      GetSwapChain().Format,             // VkFormat                       format
-      VK_SAMPLE_COUNT_1_BIT,             // VkSampleCountFlagBits          samples
-      VK_ATTACHMENT_LOAD_OP_CLEAR,       // VkAttachmentLoadOp             loadOp
-      VK_ATTACHMENT_STORE_OP_STORE,      // VkAttachmentStoreOp            storeOp
+      0,                             // VkAttachmentDescriptionFlags   flags
+      GetSwapChain().Format,         // VkFormat                       format
+      VK_SAMPLE_COUNT_1_BIT,         // VkSampleCountFlagBits          samples
+      VK_ATTACHMENT_LOAD_OP_CLEAR,   // VkAttachmentLoadOp             loadOp
+      VK_ATTACHMENT_STORE_OP_STORE,  // VkAttachmentStoreOp            storeOp
       VK_ATTACHMENT_LOAD_OP_DONT_CARE,   // VkAttachmentLoadOp stencilLoadOp
       VK_ATTACHMENT_STORE_OP_DONT_CARE,  // VkAttachmentStoreOp stencilStoreOp
       VK_IMAGE_LAYOUT_UNDEFINED,         // VkImageLayout initialLayout;
@@ -72,8 +72,8 @@ bool HelloTriangle::CreateFramebuffers() {
         render_pass_,  // VkRenderPass                   renderPass
         1,             // uint32_t                       attachmentCount
         &swap_chain_images[i].View,  // const VkImageView *pAttachments
-        300,                         // uint32_t                       width
-        300,                         // uint32_t                       height
+        800,                         // uint32_t                       width
+        600,                         // uint32_t                       height
         1                            // uint32_t                       layers
     };
 
@@ -147,8 +147,8 @@ bool HelloTriangle::CreatePipeline() {
   VkViewport viewport = {
       0.0f,    // float                                          x
       0.0f,    // float                                          y
-      300.0f,  // float                                          width
-      300.0f,  // float                                          height
+      800.0f,  // float                                          width
+      600.0f,  // float                                          height
       0.0f,    // float                                          minDepth
       1.0f     // float                                          maxDepth
   };
@@ -160,8 +160,8 @@ bool HelloTriangle::CreatePipeline() {
                       },
                       {
                           // VkExtent2D extent
-                          300,  // int32_t width
-                          300   // int32_t height
+                          800,  // int32_t width
+                          600   // int32_t height
                       }};
 
   VkPipelineViewportStateCreateInfo viewport_state_create_info = {
@@ -420,7 +420,7 @@ bool HelloTriangle::RecordCommandBuffers() {
   };
 
   VkClearValue clear_value = {
-      {1.0f, 0.8f, 0.4f, 0.0f},  // VkClearColorValue              color
+      {0.2f, 0.3f, 0.3f, 1.0f},  // VkClearColorValue              color
   };
 
   const std::vector<ImageParameters>& swap_chain_images = GetSwapChain().Images;
@@ -462,8 +462,8 @@ bool HelloTriangle::RecordCommandBuffers() {
          },
          {
              // VkExtent2D                     extent
-             300,  // int32_t                        width
-             300,  // int32_t                        height
+             800,  // int32_t                        width
+             600,  // int32_t                        height
          }},
         1,            // uint32_t                       clearValueCount
         &clear_value  // const VkClearValue            *pClearValues

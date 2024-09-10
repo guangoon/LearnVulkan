@@ -12,30 +12,31 @@
 
 VulkanCommon::VulkanCommon() {}
 
-  VulkanCommon::~VulkanCommon() {
-    if( vulkan_.Device != VK_NULL_HANDLE ) {
-      vkDeviceWaitIdle( vulkan_.Device );
+VulkanCommon::~VulkanCommon() {
+  if (vulkan_.Device != VK_NULL_HANDLE) {
+    vkDeviceWaitIdle(vulkan_.Device);
 
-      for( size_t i = 0; i < vulkan_.SwapChain.Images.size(); ++i ) {
-        if( vulkan_.SwapChain.Images[i].View != VK_NULL_HANDLE ) {
-          vkDestroyImageView( GetDevice(), vulkan_.SwapChain.Images[i].View, nullptr );
-        }
+    for (size_t i = 0; i < vulkan_.SwapChain.Images.size(); ++i) {
+      if (vulkan_.SwapChain.Images[i].View != VK_NULL_HANDLE) {
+        vkDestroyImageView(GetDevice(), vulkan_.SwapChain.Images[i].View,
+                           nullptr);
       }
-
-      if( vulkan_.SwapChain.Handle != VK_NULL_HANDLE ) {
-        vkDestroySwapchainKHR( vulkan_.Device, vulkan_.SwapChain.Handle, nullptr );
-      }
-      vkDestroyDevice( vulkan_.Device, nullptr );
     }
 
-    if( vulkan_.PresentationSurface != VK_NULL_HANDLE ) {
-      vkDestroySurfaceKHR( vulkan_.Instance, vulkan_.PresentationSurface, nullptr );
+    if (vulkan_.SwapChain.Handle != VK_NULL_HANDLE) {
+      vkDestroySwapchainKHR(vulkan_.Device, vulkan_.SwapChain.Handle, nullptr);
     }
-
-    if( vulkan_.Instance != VK_NULL_HANDLE ) {
-      vkDestroyInstance( vulkan_.Instance, nullptr );
-    }
+    vkDestroyDevice(vulkan_.Device, nullptr);
   }
+
+  if (vulkan_.PresentationSurface != VK_NULL_HANDLE) {
+    vkDestroySurfaceKHR(vulkan_.Instance, vulkan_.PresentationSurface, nullptr);
+  }
+
+  if (vulkan_.Instance != VK_NULL_HANDLE) {
+    vkDestroyInstance(vulkan_.Instance, nullptr);
+  }
+}
 
 bool VulkanCommon::CheckExtensionAvailability(
     const char *extension_name,
@@ -76,19 +77,7 @@ bool VulkanCommon::CreateInstance() {
     return false;
   }
 
-  for (auto available_extension : available_extensions) {
-    std::cout << "available_extension.extensionName : " +
-                     std::string(available_extension.extensionName)
-              << std::endl;
-  }
-
   std::vector<const char *> extensions = GetRequiredExtensions();
-
-  for (auto required_extension : extensions) {
-    std::cout << "required_extension.extensionName : " +
-                     std::string(required_extension)
-              << std::endl;
-  }
 
   for (std::size_t i = 0; i < extensions.size(); ++i) {
     if (!CheckExtensionAvailability(extensions[i], available_extensions)) {
@@ -689,23 +678,18 @@ bool VulkanCommon::CreateSwapChainImageViews() {
 }
 
 bool VulkanCommon::PrepareVulkan(GLFWwindow *window) {
-  std::cout << "VulkanCommon::PrepareVulkan" << std::endl;
   if (!CreateInstance()) {
     return false;
   }
-  std::cout << "VulkanCommon::CreatePresentationSurface" << std::endl;
   if (!CreatePresentationSurface(window)) {
     return false;
   }
-  std::cout << "VulkanCommon::CreateDevice" << std::endl;
   if (!CreateDevice()) {
     return false;
   }
-  std::cout << "VulkanCommon::GetDeviceQueue" << std::endl;
   if (!GetDeviceQueue()) {
     return false;
   }
-  std::cout << "VulkanCommon::CreateSwapChain" << std::endl;
   if (!CreateSwapChain()) {
     return false;
   }
