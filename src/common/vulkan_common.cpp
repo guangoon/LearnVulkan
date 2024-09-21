@@ -81,35 +81,26 @@ bool VulkanCommon::CreateInstance() {
 
   for (std::size_t i = 0; i < extensions.size(); ++i) {
     if (!CheckExtensionAvailability(extensions[i], available_extensions)) {
-      std::cout << "Could not find instance extension named \"" << extensions[i]
-                << "\"!" << std::endl;
+      std::cout << "Could not find instance extension : " << extensions[i]
+                << std::endl;
       return false;
     }
   }
 
-  VkApplicationInfo application_info = {
-      VK_STRUCTURE_TYPE_APPLICATION_INFO,  // VkStructureType            sType
-      nullptr,                             // const void                *pNext
-      "API without Secrets: Introduction to Vulkan",  // const char
-                                                      // *pApplicationName
-      VK_MAKE_VERSION(1, 0, 0),    // uint32_t applicationVersion
-      "Vulkan Tutorial by Intel",  // const char                *pEngineName
-      VK_MAKE_VERSION(1, 0, 0),    // uint32_t                   engineVersion
-      VK_MAKE_VERSION(1, 0, 0)     // uint32_t                   apiVersion
-  };
+  VkApplicationInfo application_info = {};
+  application_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+  application_info.pApplicationName = "LearnVulkan";
+  application_info.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+  application_info.pEngineName = "LearnVulkan";
+  application_info.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+  application_info.apiVersion = VK_MAKE_VERSION(1, 0, 0);
 
-  VkInstanceCreateInfo instance_create_info = {
-      VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,  // VkStructureType sType
-      nullptr,            // const void                *pNext
-      0,                  // VkInstanceCreateFlags      flags
-      &application_info,  // const VkApplicationInfo   *pApplicationInfo
-      0,                  // uint32_t                   enabledLayerCount
-      nullptr,            // const char * const        *ppEnabledLayerNames
-      static_cast<uint32_t>(
-          extensions.size()),  // uint32_t enabledExtensionCount
-      extensions.data()  // const char * const        *ppEnabledExtensionNames
-  };
-
+  VkInstanceCreateInfo instance_create_info = {};
+  instance_create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+  instance_create_info.pApplicationInfo = &application_info;
+  instance_create_info.enabledLayerCount = 0;
+  instance_create_info.enabledExtensionCount = extensions.size();
+  instance_create_info.ppEnabledExtensionNames = extensions.data();
   if (vkCreateInstance(&instance_create_info, nullptr, &vulkan_.Instance) !=
       VK_SUCCESS) {
     std::cout << "Could not create Vulkan instance!" << std::endl;
@@ -271,45 +262,30 @@ bool VulkanCommon::CreateDevice() {
 
   std::vector<VkDeviceQueueCreateInfo> queue_create_infos;
   std::vector<float> queue_priorities = {1.0f};
-
-  queue_create_infos.push_back({
-      VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,  // VkStructureType sType
-      nullptr,  // const void                  *pNext
-      0,        // VkDeviceQueueCreateFlags     flags
-      selected_graphics_queue_family_index,  // uint32_t queueFamilyIndex
-      static_cast<uint32_t>(queue_priorities.size()),  // uint32_t queueCount
-      queue_priorities.data()  // const float *pQueuePriorities
-  });
+  VkDeviceQueueCreateInfo graphic_create_info = {};
+  graphic_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+  graphic_create_info.queueFamilyIndex = selected_graphics_queue_family_index;
+  graphic_create_info.queueCount = queue_priorities.size();
+  graphic_create_info.pQueuePriorities = queue_priorities.data();
+  queue_create_infos.push_back(graphic_create_info);
 
   if (selected_graphics_queue_family_index !=
       selected_present_queue_family_index) {
-    queue_create_infos.push_back({
-        VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,  // VkStructureType sType
-        nullptr,  // const void                  *pNext
-        0,        // VkDeviceQueueCreateFlags     flags
-        selected_present_queue_family_index,  // uint32_t queueFamilyIndex
-        static_cast<uint32_t>(queue_priorities.size()),  // uint32_t queueCount
-        queue_priorities.data()  // const float *pQueuePriorities
-    });
+    VkDeviceQueueCreateInfo present_create_info = {};
+    present_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+    present_create_info.queueFamilyIndex = selected_present_queue_family_index;
+    present_create_info.queueCount = queue_priorities.size();
+    present_create_info.pQueuePriorities = queue_priorities.data();
+    queue_create_infos.push_back(present_create_info);
   }
 
   std::vector<const char *> extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-
-  VkDeviceCreateInfo device_create_info = {
-      VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,  // VkStructureType sType
-      nullptr,  // const void                        *pNext
-      0,        // VkDeviceCreateFlags                flags
-      static_cast<uint32_t>(
-          queue_create_infos.size()),  // uint32_t queueCreateInfoCount
-      queue_create_infos
-          .data(),  // const VkDeviceQueueCreateInfo     *pQueueCreateInfos
-      0,            // uint32_t                           enabledLayerCount
-      nullptr,      // const char * const                *ppEnabledLayerNames
-      static_cast<uint32_t>(
-          extensions.size()),  // uint32_t enabledExtensionCount
-      extensions.data(),       // const char * const *ppEnabledExtensionNames
-      nullptr  // const VkPhysicalDeviceFeatures    *pEnabledFeatures
-  };
+  VkDeviceCreateInfo device_create_info = {};
+  device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+  device_create_info.queueCreateInfoCount = queue_create_infos.size();
+  device_create_info.pQueueCreateInfos = queue_create_infos.data();
+  device_create_info.enabledExtensionCount = extensions.size();
+  device_create_info.ppEnabledExtensionNames = extensions.data();
 
   if (vkCreateDevice(vulkan_.PhysicalDevice, &device_create_info, nullptr,
                      &vulkan_.Device) != VK_SUCCESS) {
@@ -583,27 +559,21 @@ bool VulkanCommon::CreateSwapChain() {
     return true;
   }
 
-  VkSwapchainCreateInfoKHR swap_chain_create_info = {
-      VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,  // VkStructureType sType
-      nullptr,                      // const void                    *pNext
-      0,                            // VkSwapchainCreateFlagsKHR      flags
-      vulkan_.PresentationSurface,  // VkSurfaceKHR                   surface
-      desired_number_of_images,  // uint32_t                       minImageCount
-      desired_format.format,     // VkFormat                       imageFormat
-      desired_format.colorSpace,  // VkColorSpaceKHR imageColorSpace
-      desired_extent,             // VkExtent2D                     imageExtent
-      1,              // uint32_t                       imageArrayLayers
-      desired_usage,  // VkImageUsageFlags              imageUsage
-      VK_SHARING_MODE_EXCLUSIVE,  // VkSharingMode imageSharingMode
-      0,        // uint32_t                       queueFamilyIndexCount
-      nullptr,  // const uint32_t                *pQueueFamilyIndices
-      desired_transform,  // VkSurfaceTransformFlagBitsKHR  preTransform
-      VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,  // VkCompositeAlphaFlagBitsKHR
-                                          // compositeAlpha
-      desired_present_mode,  // VkPresentModeKHR               presentMode
-      VK_TRUE,               // VkBool32                       clipped
-      old_swap_chain         // VkSwapchainKHR                 oldSwapchain
-  };
+  VkSwapchainCreateInfoKHR swap_chain_create_info = {};
+  swap_chain_create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+  swap_chain_create_info.surface = vulkan_.PresentationSurface;
+  swap_chain_create_info.minImageCount = desired_number_of_images;
+  swap_chain_create_info.imageFormat = desired_format.format;
+  swap_chain_create_info.imageColorSpace = desired_format.colorSpace;
+  swap_chain_create_info.imageExtent = desired_extent;
+  swap_chain_create_info.imageArrayLayers = 1;
+  swap_chain_create_info.imageUsage = desired_usage;
+  swap_chain_create_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+  swap_chain_create_info.preTransform = desired_transform;
+  swap_chain_create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+  swap_chain_create_info.presentMode = desired_present_mode;
+  swap_chain_create_info.clipped = VK_TRUE;
+  swap_chain_create_info.oldSwapchain = old_swap_chain;
 
   if (vkCreateSwapchainKHR(vulkan_.Device, &swap_chain_create_info, nullptr,
                            &vulkan_.SwapChain.Handle) != VK_SUCCESS) {
@@ -642,36 +612,22 @@ bool VulkanCommon::CreateSwapChain() {
 
 bool VulkanCommon::CreateSwapChainImageViews() {
   for (std::size_t i = 0; i < vulkan_.SwapChain.Images.size(); ++i) {
-    VkImageViewCreateInfo image_view_create_info = {
-        VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,  // VkStructureType sType
-        nullptr,  // const void                    *pNext
-        0,        // VkImageViewCreateFlags         flags
-        vulkan_.SwapChain.Images[i].Handle,  // VkImage image
-        VK_IMAGE_VIEW_TYPE_2D,  // VkImageViewType                viewType
-        GetSwapChain().Format,  // VkFormat                       format
-        {
-            // VkComponentMapping             components
-            VK_COMPONENT_SWIZZLE_IDENTITY,  // VkComponentSwizzle             r
-            VK_COMPONENT_SWIZZLE_IDENTITY,  // VkComponentSwizzle             g
-            VK_COMPONENT_SWIZZLE_IDENTITY,  // VkComponentSwizzle             b
-            VK_COMPONENT_SWIZZLE_IDENTITY   // VkComponentSwizzle             a
-        },
-        {
-            // VkImageSubresourceRange        subresourceRange
-            VK_IMAGE_ASPECT_COLOR_BIT,  // VkImageAspectFlags aspectMask
-            0,  // uint32_t                       baseMipLevel
-            1,  // uint32_t                       levelCount
-            0,  // uint32_t                       baseArrayLayer
-            1   // uint32_t                       layerCount
-        }};
-
+    VkImageViewCreateInfo image_view_create_info = {};
+    image_view_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    image_view_create_info.image = vulkan_.SwapChain.Images[i].Handle;
+    image_view_create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    image_view_create_info.format = GetSwapChain().Format;
+    image_view_create_info.components = {
+        VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY,
+        VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY};
+    image_view_create_info.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1,
+                                               0, 1};
     if (vkCreateImageView(GetDevice(), &image_view_create_info, nullptr,
                           &vulkan_.SwapChain.Images[i].View) != VK_SUCCESS) {
       std::cout << "Could not create image view for framebuffer!" << std::endl;
       return false;
     }
   }
-
   can_render_ = true;
 
   return true;
