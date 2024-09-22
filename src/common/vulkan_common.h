@@ -89,6 +89,7 @@ class VulkanCommon {
   bool PrepareVulkan(GLFWwindow *window);
   const QueueParameters GetGraphicsQueue() const;
   const QueueParameters GetPresentQueue() const;
+  VkPhysicalDevice GetPhysicalDevice() const;
   bool OnWindowSizeChanged();
   virtual bool Draw() = 0;
   virtual bool ReadyToDraw() const final { return can_render_; }
@@ -109,6 +110,7 @@ class VulkanCommon {
   bool CreateSwapChain();
   bool CreateSwapChainImageViews();
   bool GetDeviceQueue();
+  
   std::vector<const char *> GetRequiredExtensions();
 
   uint32_t GetSwapChainNumImages(

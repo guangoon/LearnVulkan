@@ -8,45 +8,43 @@
 #include <iostream>
 
 bool HelloTriangle::CreateRenderPass() {
-  VkAttachmentDescription attachment_descriptions[] = {{
-      0,                                // VkAttachmentDescriptionFlags   flags
-      GetSwapChain().Format,            // VkFormat                       format
-      VK_SAMPLE_COUNT_1_BIT,            // VkSampleCountFlagBits  samples
-      VK_ATTACHMENT_LOAD_OP_CLEAR,      // VkAttachmentLoadOp     loadOp
-      VK_ATTACHMENT_STORE_OP_STORE,     // VkAttachmentStoreOp    storeOp
-      VK_ATTACHMENT_LOAD_OP_DONT_CARE,  // VkAttachmentLoadOp stencilLoadOp
-      VK_ATTACHMENT_STORE_OP_DONT_CARE,  // VkAttachmentStoreOp stencilStoreOp
-      VK_IMAGE_LAYOUT_UNDEFINED,         // VkImageLayout initialLayout;
-      VK_IMAGE_LAYOUT_PRESENT_SRC_KHR    // VkImageLayout finalLayout
-  }};
+  VkAttachmentDescription color_attachment{};
+  color_attachment.format = GetSwapChain().Format;
+  color_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+  color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  color_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  color_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  color_attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-  VkAttachmentReference color_attachment_references[] = {{
-      0,  // uint32_t                       attachment
-      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL  // VkImageLayout layout
-  }};
+  VkAttachmentReference color_attachment_references{};
+  color_attachment_references.attachment = 0;
+  color_attachment_references.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-  VkSubpassDescription subpass_descriptions[] = {{
-      0,                                // VkSubpassDescriptionFlags      flags
-      VK_PIPELINE_BIND_POINT_GRAPHICS,  // VkPipelineBindPoint pipelineBindPoint
-      0,        // uint32_t                       inputAttachmentCount
-      nullptr,  // const VkAttachmentReference   *pInputAttachments
-      1,        // uint32_t                       colorAttachmentCount
-      color_attachment_references,  // const VkAttachmentReference
-                                    // *pColorAttachments
-      nullptr,  // const VkAttachmentReference   *pResolveAttachments
-      nullptr,  // const VkAttachmentReference   *pDepthStencilAttachment
-      0,        // uint32_t                       preserveAttachmentCount
-      nullptr   // const uint32_t*                pPreserveAttachments
-  }};
+  VkSubpassDescription subpass{};
+  subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+  subpass.colorAttachmentCount = 1;
+  subpass.pColorAttachments = &color_attachment_references;
 
-  VkRenderPassCreateInfo render_pass_create_info;
-  render_pass_create_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-  render_pass_create_info.attachmentCount = 1;
-  render_pass_create_info.pAttachments = attachment_descriptions;
-  render_pass_create_info.subpassCount = 1;
-  render_pass_create_info.pSubpasses = subpass_descriptions;
+  VkSubpassDependency dependency{};
+  dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+  dependency.dstSubpass = 0;
+  dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency.srcAccessMask = 0;
+  dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
-  if (vkCreateRenderPass(GetDevice(), &render_pass_create_info, nullptr,
+  VkRenderPassCreateInfo render_pass_info{};
+  render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+  render_pass_info.attachmentCount = 1;
+  render_pass_info.pAttachments = &color_attachment;
+  render_pass_info.subpassCount = 1;
+  render_pass_info.pSubpasses = &subpass;
+  render_pass_info.dependencyCount = 1;
+  render_pass_info.pDependencies = &dependency;
+
+  if (vkCreateRenderPass(GetDevice(), &render_pass_info, nullptr,
                          &render_pass_) != VK_SUCCESS) {
     std::cout << "Could not create render pass!" << std::endl;
     return false;
@@ -81,10 +79,10 @@ bool HelloTriangle::CreateFramebuffers() {
 bool HelloTriangle::CreatePipeline() {
   Tools::AutoDeleter<VkShaderModule, PFN_vkDestroyShaderModule>
       vertex_shader_module =
-          CreateShaderModule("data/2.1.hello_triangle/shader.vert.spv");
+          CreateShaderModule("data/2.2.hello_triangle/shader.vert.spv");
   Tools::AutoDeleter<VkShaderModule, PFN_vkDestroyShaderModule>
       fragment_shader_module =
-          CreateShaderModule("data/2.1.hello_triangle/shader.frag.spv");
+          CreateShaderModule("data/2.2.hello_triangle/shader.frag.spv");
 
   if (!vertex_shader_module || !fragment_shader_module) {
     return false;
@@ -111,6 +109,25 @@ bool HelloTriangle::CreatePipeline() {
   vertex_input_state_create_info.sType =
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
+  VkVertexInputBindingDescription bindingDescription{};
+  bindingDescription.binding = 0;
+  bindingDescription.stride = sizeof(Vertex);
+  bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+  std::array<VkVertexInputAttributeDescription, 1> attributeDescriptions{};
+  attributeDescriptions[0].binding = 0;
+  attributeDescriptions[0].location = 0;
+  attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+  attributeDescriptions[0].offset = offsetof(Vertex, pos);
+
+  vertex_input_state_create_info.vertexBindingDescriptionCount = 1;
+  vertex_input_state_create_info.vertexAttributeDescriptionCount =
+      static_cast<uint32_t>(attributeDescriptions.size());
+  vertex_input_state_create_info.pVertexBindingDescriptions =
+      &bindingDescription;
+  vertex_input_state_create_info.pVertexAttributeDescriptions =
+      attributeDescriptions.data();
+
   VkPipelineInputAssemblyStateCreateInfo input_assembly_state_create_info = {};
   input_assembly_state_create_info.sType =
       VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -133,16 +150,20 @@ bool HelloTriangle::CreatePipeline() {
   VkPipelineRasterizationStateCreateInfo rasterization_state_create_info = {};
   rasterization_state_create_info.sType =
       VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+  rasterization_state_create_info.depthClampEnable = VK_FALSE;
+  rasterization_state_create_info.rasterizerDiscardEnable = VK_FALSE;
   rasterization_state_create_info.polygonMode = VK_POLYGON_MODE_FILL;
   rasterization_state_create_info.cullMode = VK_CULL_MODE_BACK_BIT;
   rasterization_state_create_info.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
   rasterization_state_create_info.lineWidth = 1.0f;
+  rasterization_state_create_info.depthBiasEnable = VK_FALSE;
 
   VkPipelineMultisampleStateCreateInfo multisample_state_create_info = {};
   multisample_state_create_info.sType =
       VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
   multisample_state_create_info.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
   multisample_state_create_info.minSampleShading = 1.0f;
+  multisample_state_create_info.sampleShadingEnable = VK_FALSE;
 
   VkPipelineColorBlendAttachmentState color_blend_attachment_state = {
       VK_FALSE,
@@ -517,3 +538,63 @@ bool HelloTriangle::Draw() {
   }
   return true;
 }
+
+bool HelloTriangle::CreateVertexBuffer() {
+  const std::vector<Vertex> vertices = {
+      {{
+          0.5f,
+          -0.5f,
+          0.0f,
+      }},
+      {{
+          0.0f,
+          0.5f,
+          0.0f,
+      }},
+      {{
+          -0.5f,
+          -0.5f,
+          0.0f,
+      }},
+  };
+  VkBufferCreateInfo buffer_info{};
+  buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+  buffer_info.size = sizeof(vertices[0]) * vertices.size();
+  buffer_info.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+  buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+  if (vkCreateBuffer(GetDevice(), &buffer_info, nullptr, &vertex_buffer_) !=
+      VK_SUCCESS) {
+    return false;
+  }
+  if (vkCreateBuffer(GetDevice(), &buffer_info, nullptr,
+                     &vertex_buffer_) != VK_SUCCESS) {
+    std::cout << "Could not create a vertex buffer!" << std::endl;
+    return false;
+  }
+}
+
+ bool HelloTriangle::AllocateBufferMemory( VkBuffer buffer, VkDeviceMemory *memory ) {
+    VkMemoryRequirements buffer_memory_requirements;
+    vkGetBufferMemoryRequirements( GetDevice(), buffer, &buffer_memory_requirements );
+
+    VkPhysicalDeviceMemoryProperties memory_properties;
+    vkGetPhysicalDeviceMemoryProperties( GetPhysicalDevice(), &memory_properties );
+
+    for( uint32_t i = 0; i < memory_properties.memoryTypeCount; ++i ) {
+      if( (buffer_memory_requirements.memoryTypeBits & (1 << i)) &&
+        (memory_properties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) ) {
+
+        VkMemoryAllocateInfo memory_allocate_info = {
+          VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,     // VkStructureType                        sType
+          nullptr,                                    // const void                            *pNext
+          buffer_memory_requirements.size,            // VkDeviceSize                           allocationSize
+          i                                           // uint32_t                               memoryTypeIndex
+        };
+
+        if( vkAllocateMemory( GetDevice(), &memory_allocate_info, nullptr, memory ) == VK_SUCCESS ) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }

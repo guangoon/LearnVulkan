@@ -685,3 +685,7 @@ bool VulkanCommon::OnWindowSizeChanged() {
 
   return false;
 }
+
+  VkPhysicalDevice VulkanCommon::GetPhysicalDevice() const {
+    return vulkan_.PhysicalDevice;
+  }

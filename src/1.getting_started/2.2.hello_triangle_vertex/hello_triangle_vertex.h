@@ -1,8 +1,14 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <vector>
 
 #include "common/tools.h"
 #include "common/vulkan_common.h"
+
+struct Vertex {
+    glm::vec3 pos;
+};
 
 class HelloTriangle : public VulkanCommon {
  public:
@@ -13,6 +19,7 @@ class HelloTriangle : public VulkanCommon {
   bool CreatePipeline();
   bool CreateSemaphores();
   bool CreateCommandBuffers();
+  bool CreateVertexBuffer();
   bool RecordCommandBuffers();
   bool Draw() override;
 
@@ -26,6 +33,7 @@ class HelloTriangle : public VulkanCommon {
   bool CreateCommandPool(uint32_t queue_family_index, VkCommandPool* pool);
   bool AllocateCommandBuffers(VkCommandPool pool, uint32_t count,
                               VkCommandBuffer* command_buffers);
+  bool AllocateBufferMemory( VkBuffer buffer, VkDeviceMemory *memory );
   VkRenderPass render_pass_;
   std::vector<VkFramebuffer> framebuffers_;
   VkPipeline graphics_pipeline_;
@@ -33,4 +41,5 @@ class HelloTriangle : public VulkanCommon {
   VkSemaphore rendering_finished_femaphore_;
   VkCommandPool graphics_command_pool_;
   std::vector<VkCommandBuffer> graphics_command_buffers_;
+  VkBuffer vertex_buffer_;
 };
